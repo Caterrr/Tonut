@@ -37,7 +37,7 @@ export class PageConnection {
     if (this.socket.readyState !== WebSocket.OPEN) return Promise.reject(new Error('页面连接不可用'));
     const id = ++this.serial;
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => { this.pending.delete(id); reject(new Error('页面请求超时')); }, 4000);
+      const timer = setTimeout(() => { this.pending.delete(id); reject(Object.assign(new Error('Page request timed out'),{code:'cdp_timeout'})); }, 4000);
       this.pending.set(id, { resolve, reject, timer });
       try { this.socket.send(JSON.stringify({ id, method, params })); }
       catch { clearTimeout(timer); this.pending.delete(id); reject(new Error('页面请求失败')); }

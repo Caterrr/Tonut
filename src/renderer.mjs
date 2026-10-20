@@ -1,6 +1,6 @@
 // This function is self-contained so the identical renderer works in the demo and CDP.
 // Own DOM only: no reparenting, no React state, no reading account text or chat content.
-export function installAvatarRing(selector) {
+export function installAvatarRing(selector,donutSVG='') {
   const accent = 'var(--codex-base-accent, var(--color-text-info, #bdcc65))';
   const KEY = '__codexAvatarQuota';
   if (window[KEY]) window[KEY].destroy();
@@ -43,6 +43,32 @@ export function installAvatarRing(selector) {
   }
   const remaining = row('剩余', 'remaining');
   const reset = row('距重置', 'reset'); reset.container.style.marginTop = '12px';
+  const creditsFooter=document.createElement('div');
+  creditsFooter.dataset.quota='reset-credits';creditsFooter.style.cssText='margin-top:10px;font-size:10px;line-height:1.4;color:var(--color-text-secondary,inherit)';
+  creditsFooter.hidden=true;tooltip.append(creditsFooter);let creditKey=null;
+  function renderCredits(stale) {
+    const data=stale?null:value.resetCredits;
+    const key=JSON.stringify(data);if(key===creditKey)return;creditKey=key;creditsFooter.replaceChildren();
+    if(!donutSVG){creditsFooter.hidden=true;return;}creditsFooter.hidden=false;
+    if(!data||!Number.isSafeInteger(data.availableCount)||data.availableCount<0){creditsFooter.textContent='重置券暂不可用';return;}
+    if(data.availableCount===0){creditsFooter.textContent='暂无重置券';return;}
+    const icons=document.createElement('div');icons.style.cssText='display:flex;align-items:center;gap:4px';
+    const label=document.createElement('span');label.textContent='重置券';label.style.marginRight='3px';icons.append(label);
+    const shown=Math.min(data.availableCount,8);
+    for(let i=0;i<shown;i++){
+      const icon=document.createElement('span');icon.style.cssText='display:inline-flex;width:18px;height:18px;flex:none';
+      icon.innerHTML=donutSVG.replaceAll('id="ring"',`id="tonut-credit-${i}"`).replaceAll('url(#ring)',`url(#tonut-credit-${i})`);
+      const svg=icon.querySelector('svg');if(svg){svg.setAttribute('width','18');svg.setAttribute('height','18');svg.setAttribute('aria-label',`第${i+1}张重置券`);}icons.append(icon);
+    }
+    if(data.availableCount>shown){const more=document.createElement('span');more.textContent=`+${data.availableCount-shown}`;icons.append(more);}
+    creditsFooter.append(icons);creditsFooter.setAttribute('aria-label',`可用${data.availableCount}张使用限额重置券`);
+    const format=stamp=>new Intl.DateTimeFormat(undefined,{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'shortOffset'}).format(new Date(stamp*1000));
+    if(Array.isArray(data.credits))for(let i=0;i<Math.min(data.credits.length,data.availableCount,8);i++){
+      const expiry=document.createElement('div');expiry.style.cssText='margin-top:3px;opacity:.8';expiry.dataset.quota='credit-expiry';
+      expiry.textContent=`${i+1} · ${Number.isFinite(data.credits[i].expiresAt)?format(data.credits[i].expiresAt)+' 到期':'到期时间暂不可用'}`;creditsFooter.append(expiry);
+    }
+    if(!Array.isArray(data.credits)||data.credits.length<data.availableCount){const unknown=document.createElement('div');unknown.style.marginTop='3px';unknown.textContent='部分到期时间暂不可用';creditsFooter.append(unknown);}
+  }
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const rows = [remaining, reset];
   let motion = [], revision = 0, phase = 'closed';
@@ -172,11 +198,12 @@ export function installAvatarRing(selector) {
     tooltip.setAttribute('aria-label', `${value.label}；剩余 ${remaining.number.textContent}；距重置 ${countdown}。下条表示剩余时间占额度窗口长度的比例，不是额度。`);
     ring.dataset.percent = percent === null ? '' : String(percent);
     ring.dataset.state = percent === null ? 'unavailable' : 'ready';
+    renderCredits(stale);
     position();
   }
   const timer = setInterval(render, 250);
   window[KEY] = {
-    update(next) { value = { percent: next.percent, label: next.label, updatedAt: next.updatedAt, resetsAt: next.resetsAt, windowDurationMins: next.windowDurationMins }; render(); },
+    update(next) { value = { percent: next.percent, label: next.label, updatedAt: next.updatedAt, resetsAt: next.resetsAt, windowDurationMins: next.windowDurationMins, resetCredits: next.resetCredits }; render(); },
     status() { return { placed: ring.style.display !== 'none', percent: ring.dataset.percent, state: ring.dataset.state, updatedAt: value.updatedAt, label: value.label }; },
     destroy() { clearInterval(timer); cancelMotion(); reducedMotion.removeEventListener('change', motionChanged); document.removeEventListener('keydown', escape); unbind(); ring.remove(); tooltip.remove(); delete window[KEY]; }
   };

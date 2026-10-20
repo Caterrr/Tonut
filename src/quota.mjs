@@ -1,9 +1,16 @@
+// Reset credits are independent of quota windows. Count is authoritative; IDs/titles are never forwarded.
+export function resetCreditsFromResponse(response,now=Date.now()) {
+  const value=response?.rateLimitResetCredits;
+  if(!Number.isSafeInteger(value?.availableCount)||value.availableCount<0)return null;
+  const credits=Array.isArray(value.credits)?value.credits.filter(c=>c?.status==='available'&&c.resetType==='codexRateLimits'&&(!Number.isFinite(c.expiresAt)||c.expiresAt*1000>now)).map(c=>({expiresAt:Number.isSafeInteger(c.expiresAt)&&c.expiresAt>0&&c.expiresAt<=8640000000000?c.expiresAt:null})):null;
+  return {availableCount:value.availableCount,credits};
+}
 // Full snapshots only. Never infer quota from token counts, plan names or credits.
 export function quotaFromResponse(response, duration = 10080, now = Date.now()) {
   const hasMap = response?.rateLimitsByLimitId != null;
   const bucket = hasMap ? response.rateLimitsByLimitId.codex : response?.rateLimits;
   const label = duration === 10080 ? 'Codex 周额度' : duration === 300 ? 'Codex 5 小时额度' : `Codex ${duration} 分钟额度`;
-  const empty = { percent: null, label, updatedAt: now, resetsAt: null, windowDurationMins: null };
+  const empty = { percent: null, label, updatedAt: now, resetsAt: null, windowDurationMins: null, resetCredits: resetCreditsFromResponse(response,now) };
   if (!bucket || (bucket.limitId != null && bucket.limitId !== 'codex')) return empty;
   const window = [bucket.primary, bucket.secondary].find(w => w?.windowDurationMins === duration);
   if (!window) return empty;
