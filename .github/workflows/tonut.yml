@@ -1,4 +1,4 @@
-name: Tonut checks
+name: Tonut release checks
 on:
   workflow_dispatch:
   push:
@@ -16,22 +16,23 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - run: npm ci --ignore-scripts
       - run: npm test
       - run: npm run build:preview
-      - name: Compile own macOS helper; no host restart or install
+      - name: Browser regression with unchanged animation and reset-credit unknown/zero cases
+        if: runner.os == 'Linux'
+        run: |
+          CHROME_PATH="$(command -v google-chrome)" npm run test:browser
+      - name: Compile and test own macOS kernel install guard
         if: runner.os == 'macOS'
         run: |
           mkdir -p dist
           xcrun clang -fobjc-arc -O2 -Wall -Wextra -Werror -arch arm64 -arch x86_64 -mmacosx-version-min=12.0 -framework AppKit -framework ApplicationServices macos/startup/bridge.m -o dist/startup-bridge
           codesign --force --sign - --timestamp=none dist/startup-bridge
           codesign --verify --strict dist/startup-bridge
-      - name: Parse PowerShell and compile Windows native adapter without running it
+          node test/native-mutex.mjs "$PWD/dist/startup-bridge"
+      - name: Windows parsing compilation kernel recovery and simulated Store update
         if: runner.os == 'Windows'
         shell: powershell
-        run: |
-          foreach ($File in @('windows/manage.ps1','startup/windows-bridge.ps1')) {
-            $Tokens=$null; $Errors=$null
-            [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $File),[ref]$Tokens,[ref]$Errors) | Out-Null
-            if($Errors.Count) {throw ($Errors | Out-String)}
-          }
-          Add-Type -Path (Join-Path $PWD 'startup/windows-native.cs') -ReferencedAssemblies System.Management,System.Core,System.Windows.Forms
+        run: ./test/windows-platform.ps1
+      - run: node scripts/package.mjs
