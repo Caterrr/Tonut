@@ -1,0 +1,17 @@
+{
+  "name": "tonut",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs && node test/startup-controller.cjs",
+    "demo": "node demo/server.mjs",
+    "build:preview": "node demo/build-preview.mjs",
+    "test:browser": "node test/browser.mjs",
+    "agent": "node src/agent.mjs"
+  }
+}

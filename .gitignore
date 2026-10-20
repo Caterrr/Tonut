@@ -1,0 +1,11 @@
+node_modules/
+dist/
+preview.html
+config.json
+stop.request
+*.log
+*.pid
+*.lock
+**/state.json
+**/settings.json
+.DS_Store
