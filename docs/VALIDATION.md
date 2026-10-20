@@ -10,4 +10,6 @@ On the Mac: source helper compiled for arm64/x86_64, own signature verified;0.3â
 
 Windows: CI parses PowerShell and compiles native C# without activating the host. The added Windows test exercises an isolated real kernel mutex/abandoned owner and fixture Store-package path resolution. Task registration, installed-host GUI/normal-quit refusal, actual Store upgrades, sign-in/reboot and long-term operation still need a Windows device. Mac sign-in/reboot and long-term soak are also not claimed. Neither platform has a CPU/RSS/battery benchmark.
 
+The complete Mac/Windows/Linux matrix passed in [release check run 39356308335](https://github.com/Caterrr/Tonut/actions/runs/39356308335). Repository text uses LF on every platform so the editable SVG matches its generated runtime literal and source packaging stays consistent.
+
 No paid certificate, notarization bypass, new system software, credential or broadening of the loopback listener is part of this release. The Mac package is a source installer requiring Node24 and Xcode Command Line Tools; it is not a notarized standalone app.
