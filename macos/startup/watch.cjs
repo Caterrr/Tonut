@@ -8,6 +8,8 @@ const readline=require('node:readline');
 const {StartupController}=require('../../startup/controller.cjs');
 const run=promisify(execFile);
 const root=__dirname;
+let diagnostic,beat;
+const runtimeReady=import('../../lib/diagnostics.mjs').then(m=>{diagnostic=new m.Diagnostics(path.join(root,'../..'),'startup');beat=()=>m.heartbeat(path.join(root,'../..'),'startup',config.installId);});
 const config=JSON.parse(fs.readFileSync(path.join(root,'settings.json'),'utf8'));
 const receipt=path.join(root,'state.json');
 let state={};
@@ -35,11 +37,12 @@ const adapter={
     const temp=receipt+'.tmp';
     fs.writeFileSync(temp,JSON.stringify(state,null,2)+'\n',{mode:0o600});
     fs.renameSync(temp,receipt);
-    console.log(new Date().toISOString(),event);
+    if(diagnostic)diagnostic.set(event==='error'?'worker_fault':'ready');
   }
 };
 const controller=new StartupController(adapter,{lastAttemptAt:state.lastAttemptAt||0});
 let stopped=false,queued=false,pumping=false,pendingTimer;
+const healthTimer=setInterval(()=>{if(controller.baselined&&!stopped&&beat)beat();},5000);
 async function pump() {
   queued=true;
   if(pumping||stopped)return;
@@ -49,7 +52,7 @@ async function pump() {
     while(queued&&!stopped) {
       queued=false;
       if(!fs.existsSync(path.join(root,'../../src/agent.mjs')))return shutdown();
-      await controller.tick();
+      await runtimeReady;await controller.tick();beat();
     }
   } finally {
     pumping=false;
@@ -60,13 +63,13 @@ async function pump() {
 const observer=spawn(path.join(root,'bridge'),['watch',config.app],{stdio:['ignore','pipe','ignore']});
 const lines=readline.createInterface({input:observer.stdout});
 lines.on('line',line=>{
-  try { JSON.parse(line);pump(); } catch { shutdown(1); }
+  try { JSON.parse(line);pump().catch(()=>shutdown(1)); } catch { shutdown(1); }
 });
 observer.once('error',()=>shutdown(1));
 observer.once('exit',()=>{if(!stopped)shutdown(1);});
 function shutdown(code=0) {
   if(stopped)return;
-  stopped=true;controller.stop();clearTimeout(pendingTimer);abort.abort();observer.kill('SIGTERM');
+  stopped=true;controller.stop();clearTimeout(pendingTimer);clearInterval(healthTimer);abort.abort();observer.kill('SIGTERM');
   process.exit(code);
 }
 process.once('SIGTERM',()=>shutdown());process.once('SIGINT',()=>shutdown());

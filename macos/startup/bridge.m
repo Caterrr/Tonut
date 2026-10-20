@@ -2,6 +2,9 @@
 #import <ApplicationServices/ApplicationServices.h>
 #include <libproc.h>
 #include <sys/sysctl.h>
+#include <sys/file.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 // Read event counters/timing only, never keyboard content, window titles or screenshots.
 static NSArray *eventTypes(void) { return @[@(kCGEventKeyDown), @(kCGEventLeftMouseDown), @(kCGEventRightMouseDown), @(kCGEventOtherMouseDown), @(kCGEventScrollWheel)]; }
@@ -69,6 +72,13 @@ static void output(id object) {
 int main(int argc, const char *argv[]) { @autoreleasepool {
     if (argc < 3) return 2;
     NSString *action=@(argv[1]), *path=canonical(@(argv[2]));
+    if ([action isEqualToString:@"install-lock"]) {
+        int fd=open(path.fileSystemRepresentation,O_CREAT|O_RDWR|O_CLOEXEC|O_NOFOLLOW,0600);
+        if(fd<0||flock(fd,LOCK_EX|LOCK_NB)!=0){if(fd>=0)close(fd);output(@{@"locked":@NO});return 3;}
+        output(@{@"locked":@YES}); char byte;
+        while(read(STDIN_FILENO,&byte,1)>0){}
+        close(fd);return 0;
+    }
     if ([action isEqualToString:@"snapshot"]) { output(snapshot(path)); return 0; }
     if ([action isEqualToString:@"watch"]) {
         NSApplication *application=NSApplication.sharedApplication;
