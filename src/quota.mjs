@@ -12,10 +12,10 @@ function normalizeWindow(raw,duration,now){
   label:labelFor(duration),resetsAt,windowDurationMins:duration};
 }
 // Full snapshots only. Duration identifies a window; primary/secondary order is not meaningful here.
-export function quotaFromResponse(response, duration = 10080, now = Date.now()) {
+export function quotaFromResponse(response, _legacyDuration = 10080, now = Date.now()) {
   const hasMap = response?.rateLimitsByLimitId != null;
   const bucket = hasMap ? response.rateLimitsByLimitId.codex : response?.rateLimits;
-  const empty = { percent: null, label:labelFor(duration), updatedAt: now, resetsAt: null, windowDurationMins: null, resetCredits: resetCreditsFromResponse(response),windows:[] };
+  const empty = { percent: null, label:'Codex 额度', updatedAt: now, resetsAt: null, windowDurationMins: null, resetCredits: resetCreditsFromResponse(response),windows:[] };
   if (!bucket || (bucket.limitId != null && bucket.limitId !== 'codex')) return empty;
   const candidates=[bucket.primary,bucket.secondary];
   const windows=[10080,300].flatMap(mins=>{
@@ -23,6 +23,9 @@ export function quotaFromResponse(response, duration = 10080, now = Date.now()) 
    // Ambiguous duplicate durations remain unknown instead of choosing an arbitrary quota.
    return matching.length?[normalizeWindow(matching.length===1?matching[0]:null,mins,now)]:[];
   });
-  const selected=windows.find(w=>w.windowDurationMins===duration)||windows[0];
+  // Presence of a 5h window wins even when its usage/reset is unknown or expired.
+  // A returned window with an unidentifiable duration cannot establish absence of 5h.
+  const untyped=candidates.some(w=>w!=null&&(!Number.isFinite(w.windowDurationMins)||w.windowDurationMins<=0));
+  const selected=windows.find(w=>w.windowDurationMins===300)||(untyped?null:windows.find(w=>w.windowDurationMins===10080));
   return {...empty,...selected,windows};
 }

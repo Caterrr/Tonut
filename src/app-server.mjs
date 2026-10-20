@@ -29,7 +29,7 @@ export class QuotaClient {
     });
   }
   async initialize() {
-    await this.request('initialize', { clientInfo: { name: 'tonut', title: 'Tonut', version: '0.4.2' } });
+    await this.request('initialize', { clientInfo: { name: 'tonut', title: 'Tonut', version: '0.4.3' } });
     this.child.stdin.write(JSON.stringify({ method: 'initialized', params: {} }) + '\n');
   }
   read() { return this.request('account/rateLimits/read'); }
