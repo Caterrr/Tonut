@@ -66,10 +66,13 @@ try {
   await page.locator('#account').click(); assert.match(await page.locator('#account-status').innerText(), /仍然有效/);
   const originalRing=await page.locator('#codex-avatar-quota-ring').boundingBox();
   await page.evaluate(()=>{window.__codexAvatarQuota.update({percent:55,label:'Codex 周额度',updatedAt:Date.now(),resetsAt:Date.now()/1000+86400,windowDurationMins:10080,resetCredits:null});});
-  assert.match(await page.locator('[data-quota="reset-credits"]').innerText(),/暂不可用/);
+  assert.equal(await page.locator('[data-quota="credit-state"]').innerText(),'—');
   assert.equal(await page.locator('[data-quota="reset-credits"] svg').count(),0);
   await page.evaluate(()=>{window.__codexAvatarQuota.update({percent:55,label:'Codex 周额度',updatedAt:Date.now(),resetsAt:Date.now()/1000+86400,windowDurationMins:10080,resetCredits:{availableCount:0,credits:[]}});});
-  assert.match(await page.locator('[data-quota="reset-credits"]').innerText(),/暂无/);
+  assert.equal(await page.locator('[data-quota="credit-state"]').innerText(),'没有！！');
+  const emptyState=await page.locator('[data-quota="credit-state"]').boundingBox();
+  const creditRow=await page.locator('[data-quota="reset-credits"]').boundingBox();
+  assert.ok(Math.abs(emptyState.x+emptyState.width-creditRow.x-creditRow.width)<.5);
   assert.deepEqual(await page.locator('#codex-avatar-quota-ring').boundingBox(),originalRing);
   await page.evaluate(()=>{document.documentElement.style.setProperty('--codex-base-accent','#f077af');});
   assert.equal(await page.locator('#codex-avatar-quota-ring circle').last().evaluate(e=>getComputedStyle(e).stroke),'rgb(240, 119, 175)');
