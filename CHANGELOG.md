@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.3
+
+- Automatically select the real300-minute5h window whenever present; otherwise use the real weekly window. The ring and panel share the same selected snapshot.
+- Show only the selected remaining-quota bar and its reset-time bar; remove the additional-window row. Legacy `duration` is retained for rollback but cannot override this policy.
+- Keep a recognized5h window unknown when usage/reset is missing or expired rather than falling back to weekly. Read failures and unidentifiable returned durations remain unknown, never zero or proof of absence.
+- Preserve left-aligned credit doughnuts, right-aligned “没有！！”,16px spacing and480ms/160ms motion. Add priority, legacy-setting, missing/expired and ring/panel consistency regressions.
+
 ## 0.4.2
 
 - Retain both official Codex quota windows by `windowDurationMins`, independent of primary/secondary position. Add a compact line for the additional window with its remaining percentage, accent bar and own reset countdown.
