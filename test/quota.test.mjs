@@ -28,7 +28,7 @@ test('5 hour selection remains separate from weekly and strips unrelated payload
   const r = quotaFromResponse({ rateLimits: { ...bucket(), secondary: { usedPercent: 56, windowDurationMins: 300 }, credits: { balance: 'example' } } }, 300);
   assert.equal(r.percent, 44); assert.equal(r.label, 'Codex 5 小时额度');
   assert.equal(r.windowDurationMins, 300);
-  assert.deepEqual(Object.keys(r).sort(), ['label', 'percent', 'resetsAt', 'updatedAt', 'windowDurationMins']);
+  assert.deepEqual(Object.keys(r).sort(), ['label', 'percent', 'resetCredits', 'resetsAt', 'updatedAt', 'windowDurationMins']);
 });
 test('only selected loopback websocket is accepted', () => {
   assert.equal(localWebSocket('ws://127.0.0.1:39222/devtools/page/example', 39222).hostname, '127.0.0.1');

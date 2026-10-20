@@ -16,6 +16,10 @@ try {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto(new URL('../preview.html', import.meta.url).href);
   await page.waitForFunction(() => window.__codexAvatarQuota?.status().percent === '89');
+  assert.equal(await page.locator('[data-quota="reset-credits"] svg').count(),2);
+  assert.equal(await page.locator('[data-quota="credit-expiry"]').count(),0);
+  assert.doesNotMatch(await page.locator('[data-quota="reset-credits"]').textContent(),/到期/);
+  assert.equal(await page.locator('[data-quota="reset-meter"]').count(),1);
   // Focus and the first observation run in the same task, so the opening is sampled at zero.
   const at0 = await page.evaluate(fn => { document.querySelector('#account').focus(); return eval(`(${fn})()`); }, measure.toString());
   await page.waitForTimeout(100); const at100 = await page.evaluate(measure);
@@ -60,6 +64,15 @@ try {
   await page.evaluate(() => document.querySelector('#account').blur());
   assert.equal(await page.locator('#codex-avatar-quota-tooltip').evaluate(e => e.hidden), true);
   await page.locator('#account').click(); assert.match(await page.locator('#account-status').innerText(), /仍然有效/);
+  const originalRing=await page.locator('#codex-avatar-quota-ring').boundingBox();
+  await page.evaluate(()=>{window.__codexAvatarQuota.update({percent:55,label:'Codex 周额度',updatedAt:Date.now(),resetsAt:Date.now()/1000+86400,windowDurationMins:10080,resetCredits:null});});
+  assert.match(await page.locator('[data-quota="reset-credits"]').innerText(),/暂不可用/);
+  assert.equal(await page.locator('[data-quota="reset-credits"] svg').count(),0);
+  await page.evaluate(()=>{window.__codexAvatarQuota.update({percent:55,label:'Codex 周额度',updatedAt:Date.now(),resetsAt:Date.now()/1000+86400,windowDurationMins:10080,resetCredits:{availableCount:0,credits:[]}});});
+  assert.match(await page.locator('[data-quota="reset-credits"]').innerText(),/暂无/);
+  assert.deepEqual(await page.locator('#codex-avatar-quota-ring').boundingBox(),originalRing);
+  await page.evaluate(()=>{document.documentElement.style.setProperty('--codex-base-accent','#f077af');});
+  assert.equal(await page.locator('#codex-avatar-quota-ring circle').last().evaluate(e=>getComputedStyle(e).stroke),'rgb(240, 119, 175)');
   assert.deepEqual(errors, []);
   const result = { at0, at100, at700, close0, close100, reverse0, reversed, closed, changed, afterUpdate, rapid, reduced };
   assert.deepEqual(at0.animations.map(a=>a.duration).sort((a,b)=>a-b),[160,480,480]);
