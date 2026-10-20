@@ -44,7 +44,7 @@ export function installAvatarRing(selector,donutSVG='') {
   const remaining = row('剩余', 'remaining');
   const reset = row('距重置', 'reset'); reset.container.style.marginTop = '12px';
   const creditsFooter=document.createElement('div');
-  creditsFooter.dataset.quota='reset-credits';creditsFooter.style.cssText='margin-top:13px;font-size:10px;line-height:1.4;color:var(--color-text-secondary,inherit)';
+  creditsFooter.dataset.quota='reset-credits';creditsFooter.style.cssText='margin-top:16px;font-size:10px;line-height:1.4;color:var(--color-text-secondary,inherit)';
   creditsFooter.hidden=true;tooltip.append(creditsFooter);let creditKey=null;
   function renderCredits(stale) {
     const data=stale?null:value.resetCredits;
