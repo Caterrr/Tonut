@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- Refine the reset-credit row spacing after visual review: increase its top margin from13px to16px. Available doughnuts remain left aligned; a true zero still shows right-aligned “没有！！”, unknown shows “—”.
+- Preserve the existing fonts, colors, avatar geometry, quota reset bar and 480ms/160ms entry animations.
+
 ## 0.4.0
 
 - Stage and validate complete updates before stopping Tonut; retain the last good installation and automatically roll back files, selected quota period and service configuration after a failed update. Recover an interrupted transaction on the next install/recover operation.
