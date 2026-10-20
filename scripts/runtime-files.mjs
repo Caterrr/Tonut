@@ -1,0 +1,3 @@
+export const commonFiles=['package.json','LICENSE','THIRD_PARTY_NOTICES.md','docs/UPSTREAM-LICENSE','src/agent.mjs','src/app-server.mjs','src/cdp.mjs','src/quota.mjs','src/renderer.mjs','src/donut.mjs','assets/tonut-donut.svg','lib/diagnostics.mjs','lib/host-identity.mjs','lib/transaction.mjs','scripts/runtime-files.mjs','startup/controller.cjs'];
+export const macFiles=[...commonFiles,'scripts/manage-macos.mjs','macos/startup/bridge.m','macos/startup/watch.cjs'];
+export const windowsFiles=[...commonFiles,'windows/manage.ps1','windows/watchdog.ps1','windows/host.ps1','windows/supervisor.mjs','windows/deploy.mjs','startup/windows.cjs','startup/windows-bridge.ps1','startup/windows-native.cs'];
