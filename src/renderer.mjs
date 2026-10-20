@@ -50,8 +50,12 @@ export function installAvatarRing(selector,donutSVG='') {
     const data=stale?null:value.resetCredits;
     const key=JSON.stringify(data);if(key===creditKey)return;creditKey=key;creditsFooter.replaceChildren();creditsFooter.removeAttribute('aria-label');
     if(!donutSVG){creditsFooter.hidden=true;return;}creditsFooter.hidden=false;
-    if(!data||!Number.isSafeInteger(data.availableCount)||data.availableCount<0){creditsFooter.textContent='重置券暂不可用';return;}
-    if(data.availableCount===0){creditsFooter.textContent='暂无重置券';return;}
+    if(!data||!Number.isSafeInteger(data.availableCount)||data.availableCount<0||data.availableCount===0){
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;justify-content:space-between';
+      const label=document.createElement('span');label.textContent='重置券';label.style.transform='translateY(.5px)';
+      const state=document.createElement('span');state.dataset.quota='credit-state';state.textContent=data?.availableCount===0?'没有！！':'—';
+      row.append(label,state);creditsFooter.append(row);return;
+    }
     const icons=document.createElement('div');icons.style.cssText='display:flex;align-items:center;gap:3px';
     const label=document.createElement('span');label.textContent='重置券';label.style.cssText='margin-right:4px;transform:translateY(.5px)';icons.append(label);
     const shown=Math.min(data.availableCount,8);
