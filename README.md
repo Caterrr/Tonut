@@ -1,6 +1,6 @@
 # Tonut 🍩
 
-**Token + Donut** — 在 Codex 桌面端原头像周围显示细额度圆环。悬停显示剩余额度、距重置时间，以及真实可用重置券的小甜甜圈和到期时间。
+**Token + Donut** — 在 Codex 桌面端原头像周围显示细额度圆环。悬停显示剩余额度、距重置时间，以及真实可用重置券的小甜甜圈。
 
 **0.4.0 发布范围：Mac 源码安装版；Windows 测试版。** [下载源码安装包](https://github.com/Caterrr/Tonut/releases/latest)。包内包含两平台安装/卸载入口，无 npm 运行依赖。Windows 的 CI 解析、编译、内核锁和模拟恢复测试不等于安装了 Codex 的 Windows 真机验证。
 
@@ -65,8 +65,8 @@ node "$HOME/Library/Application Support/Tonut/scripts/manage-macos.mjs" uninstal
 
 - 官方内置 CLI App Server `account/rateLimits/read`；只允许初始化及这一只读方法。优先取 `rateLimitsByLimitId.codex` 的指定窗口，旧格式仅在没有多桶映射时使用 `rateLimits`。
 - 圆环为 `clamp(100-usedPercent,0,100)`；是 Codex 指定周期的限额剩余比例，不是整个 ChatGPT 的剩余 token。下条为距重置秒数／窗口长度，表示时间。
-- 重置券数量来自 `rateLimitResetCredits.availableCount`，详细到期时间来自可用的 `credits[].expiresAt`；数量以官方汇总为准，详情可能缺失或被服务截断。未知不是零，不推算或兑换。超过8张时最多画8枚并显示其余数量。时间按设备时区显示，不凭截图补年份。
-- 金黄色圈、棕色巧克力和短矩形彩色糖针均为可编辑 SVG：`assets/tonut-donut.svg`。到期时间随甜甜圈一起在原头像 hover 弹层底部展示，保持离开立即隐藏。
+- 重置券数量来自 `rateLimitResetCredits.availableCount`，数量以官方汇总为准，详情缺失不影响计数。未知不是零，不推算或兑换。超过8张时最多画8枚并显示其余数量。不显示券的到期时间，也不将券详情传入页面。
+- 金黄色圈、棕色巧克力和短矩形彩色糖针均为可编辑 SVG：`assets/tonut-donut.svg`。甜甜圈在原头像 hover 弹层底部展示数量，保持离开立即隐藏。
 - 保留原头像位置、细圆环、480ms条／160ms面板进入、移开立即隐藏、主题跟随和减少动态效果。缺失、错误、重置过期或150秒未刷新时显示不可用。
 
 ## 机制、风险与诊断
