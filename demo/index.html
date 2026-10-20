@@ -5,6 +5,6 @@
 </style>
 <main><nav class="rail" aria-label="模拟应用侧栏"><div class="logo">◎</div><span>⌂</span><span>▤</span><span>＋</span><div class="spacer"></div><button id="account" aria-label="模拟用户头像">A</button></nav>
 <section class="content"><div class="eyebrow">CODEX · QUOTA RING</div><h1>额度，轻轻围在头像外。</h1><p class="lead">细黄绿色圆环对应剩余额度。悬停或用键盘聚焦左下角头像，查看数值与周期。</p>
-<div class="panel"><div class="muted">Codex 周额度 · 模拟数据</div><div class="value" id="reading">89<span style="font-size:24px;letter-spacing:0">%</span></div><label for="remaining">剩余百分比</label><input id="remaining" type="range" min="0" max="100" value="89"><div class="buttons"><button id="reset">89% 示例</button><button id="missing">数据不可用</button><button id="stale">数据过期</button><button id="theme">切换深浅色</button></div><div id="account-status" role="status"></div></div>
+<div class="panel"><div class="muted" id="quota-label">Codex 周额度 · 模拟数据</div><div class="value" id="reading">89<span style="font-size:24px;letter-spacing:0">%</span></div><label for="remaining">剩余百分比</label><input id="remaining" type="range" min="0" max="100" value="89"><div class="buttons"><button id="reset">89% 示例</button><button id="weekly">仅周示例</button><button id="dual">周 + 5h 示例</button><button id="five">仅5h示例</button><button id="missing">数据不可用</button><button id="stale">数据过期</button><button id="theme">切换深浅色</button></div><div id="account-status" role="status"></div></div>
 <p class="note">这是独立模拟页面，不是已经注入的客户端。页面没有账号连接，不读取凭据。实际内嵌需要另行审阅调试连接与头像定位；客户端更新可能使定位失效。</p></section></main>
 <script type="module" src="/demo.mjs"></script></html>
