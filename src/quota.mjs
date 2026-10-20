@@ -1,9 +1,8 @@
 // Reset credits are independent of quota windows. Count is authoritative; IDs/titles are never forwarded.
-export function resetCreditsFromResponse(response,now=Date.now()) {
+export function resetCreditsFromResponse(response) {
   const value=response?.rateLimitResetCredits;
   if(!Number.isSafeInteger(value?.availableCount)||value.availableCount<0)return null;
-  const credits=Array.isArray(value.credits)?value.credits.filter(c=>c?.status==='available'&&c.resetType==='codexRateLimits'&&(!Number.isFinite(c.expiresAt)||c.expiresAt*1000>now)).map(c=>({expiresAt:Number.isSafeInteger(c.expiresAt)&&c.expiresAt>0&&c.expiresAt<=8640000000000?c.expiresAt:null})):null;
-  return {availableCount:value.availableCount,credits};
+  return {availableCount:value.availableCount};
 }
 // Full snapshots only. Never infer quota from token counts, plan names or credits.
 export function quotaFromResponse(response, duration = 10080, now = Date.now()) {

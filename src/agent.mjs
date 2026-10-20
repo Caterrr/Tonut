@@ -11,7 +11,7 @@ import {HostVerifier,HostFault,validateTarget} from '../lib/host-identity.mjs';
 import {Diagnostics,heartbeat} from '../lib/diagnostics.mjs';
 export const avatarSelector='nav[data-app-navigation-rail] button:is([aria-label="打开个人资料菜单"],[aria-label="Open profile menu"]) span.relative.isolate';
 export function mainPages(targets){return Array.isArray(targets)?targets.filter(t=>t?.type==='page'&&t.url==='app://-/index.html'):[];}
-const version='0.4.0-480-160';
+const version='0.4.0-count-only-480-160';
 const root=fileURLToPath(new URL('..',import.meta.url));
 export class AgentSession {
  constructor(config,{verify=new HostVerifier(config),fetcher=fetch,connect=PageConnection.connect,makeClient=bin=>new QuotaClient(bin),report=new Diagnostics(root,'agent'),now=Date.now}={}){Object.assign(this,{config,verify,fetcher,connect,makeClient,report,now});this.page=null;this.pageId=null;this.client=null;this.lastRead=0;this.quota=quotaFromResponse(null,config.duration);}

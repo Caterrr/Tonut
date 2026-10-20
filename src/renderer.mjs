@@ -48,7 +48,7 @@ export function installAvatarRing(selector,donutSVG='') {
   creditsFooter.hidden=true;tooltip.append(creditsFooter);let creditKey=null;
   function renderCredits(stale) {
     const data=stale?null:value.resetCredits;
-    const key=JSON.stringify(data);if(key===creditKey)return;creditKey=key;creditsFooter.replaceChildren();
+    const key=JSON.stringify(data);if(key===creditKey)return;creditKey=key;creditsFooter.replaceChildren();creditsFooter.removeAttribute('aria-label');
     if(!donutSVG){creditsFooter.hidden=true;return;}creditsFooter.hidden=false;
     if(!data||!Number.isSafeInteger(data.availableCount)||data.availableCount<0){creditsFooter.textContent='重置券暂不可用';return;}
     if(data.availableCount===0){creditsFooter.textContent='暂无重置券';return;}
@@ -62,12 +62,7 @@ export function installAvatarRing(selector,donutSVG='') {
     }
     if(data.availableCount>shown){const more=document.createElement('span');more.textContent=`+${data.availableCount-shown}`;icons.append(more);}
     creditsFooter.append(icons);creditsFooter.setAttribute('aria-label',`可用${data.availableCount}张使用限额重置券`);
-    const format=stamp=>new Intl.DateTimeFormat(undefined,{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'shortOffset'}).format(new Date(stamp*1000));
-    if(Array.isArray(data.credits))for(let i=0;i<Math.min(data.credits.length,data.availableCount,8);i++){
-      const expiry=document.createElement('div');expiry.style.cssText='margin-top:3px;opacity:.8';expiry.dataset.quota='credit-expiry';
-      expiry.textContent=`${i+1} · ${Number.isFinite(data.credits[i].expiresAt)?format(data.credits[i].expiresAt)+' 到期':'到期时间暂不可用'}`;creditsFooter.append(expiry);
-    }
-    if(!Array.isArray(data.credits)||data.credits.length<data.availableCount){const unknown=document.createElement('div');unknown.style.marginTop='3px';unknown.textContent='部分到期时间暂不可用';creditsFooter.append(unknown);}
+
   }
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const rows = [remaining, reset];
