@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2
+
+- Retain both official Codex quota windows by `windowDurationMins`, independent of primary/secondary position. Add a compact line for the additional window with its remaining percentage, accent bar and own reset countdown.
+- Preserve the selected `duration` for the avatar ring; when that duration is absent, use the actually available standard window without rewriting configuration. Weekly-only and five-hour-only accounts do not acquire invented rows.
+- Keep unknown/expired percentages distinct from zero and missing reset times explicit. Preserve left-aligned reset-credit doughnuts, right-aligned “没有！！”,16px credit spacing and480ms/160ms animations.
+- Add weekly-only, five-hour-only, swapped dual-window, configured preference, missing/expired/ambiguous data and browser layout/animation regression cases.
+
 ## 0.4.1
 
 - Refine the reset-credit row spacing after visual review: increase its top margin from13px to16px. Available doughnuts remain left aligned; a true zero still shows right-aligned “没有！！”, unknown shows “—”.

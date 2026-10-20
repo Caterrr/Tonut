@@ -2,7 +2,7 @@
 
 **Token + Donut** — 在 Codex 桌面端原头像周围显示细额度圆环。悬停显示剩余额度、距重置时间，以及真实可用重置券的小甜甜圈。
 
-**0.4.1 发布范围：Mac 源码安装版；Windows 测试版。** [下载源码安装包](https://github.com/Caterrr/Tonut/releases/latest)。包内包含两平台安装/卸载入口，无 npm 运行依赖。Windows 的 CI 解析、编译、内核锁和模拟恢复测试不等于安装了 Codex 的 Windows 真机验证。
+**0.4.2 发布范围：Mac 源码安装版；Windows 测试版。** [下载源码安装包](https://github.com/Caterrr/Tonut/releases/latest)。包内包含两平台安装/卸载入口，无 npm 运行依赖。Windows 的 CI 解析、编译、内核锁和模拟恢复测试不等于安装了 Codex 的 Windows 真机验证。
 
 ## 安装条件
 
@@ -12,7 +12,7 @@
 
 ## macOS
 
-下载 `Tonut-0.4.1-source.zip` 并解压，终端进入其中 `Tonut` 文件夹。按实际应用路径运行：
+下载 `Tonut-0.4.2-source.zip` 并解压，终端进入其中 `Tonut` 文件夹。按实际应用路径运行：
 
 ```sh
 node scripts/manage-macos.mjs install /Applications/ChatGPT.app
@@ -23,7 +23,7 @@ node scripts/manage-macos.mjs status
 
 文件安装到 `~/Library/Application Support/Tonut`，登录任务仅为 `com.tonut.agent` 和 `com.tonut.startup`。安装/更新不退出当前宿主窗口。首次启用时，正常退出 Codex，再从原图标打开并等待数秒。
 
-更新：解压审阅过的新版本，重新执行同一 `install` 命令。安装器先暂存全部文件、编译与检查，再正常停止 Tonut 并切换；失败自动恢复旧文件、配置和服务。现有 `duration`（10080周／300五小时）和自定义头像选择器会保留。最后一个健康版本位于 `Tonut.previous`。安装期间不要移动源码文件夹。
+更新：解压审阅过的新版本，重新执行同一 `install` 命令。安装器先暂存全部文件、编译与检查，再正常停止 Tonut 并切换；失败自动恢复旧文件、配置和服务。现有 `duration`（10080周／300五小时）和自定义头像选择器会保留。`duration` 优先决定圆环与顶部两行跟随哪个实际窗口；该窗口缺失时使用官方确实返回的另一窗口，不修改保存的偏好。最后一个健康版本位于 `Tonut.previous`。安装期间不要移动源码文件夹。
 
 若更新被系统中断，使用新版本源码运行：
 
@@ -64,6 +64,7 @@ node "$HOME/Library/Application Support/Tonut/scripts/manage-macos.mjs" uninstal
 ## 数据与界面
 
 - 官方内置 CLI App Server `account/rateLimits/read`；只允许初始化及这一只读方法。优先取 `rateLimitsByLimitId.codex` 的指定窗口，旧格式仅在没有多桶映射时使用 `rateLimits`。
+- 按 `windowDurationMins` 识别10080分钟周窗口和300分钟5h窗口，不把 primary/secondary 的位置当成时长。有两种窗口时保留原主窗口展示，并追加一行标注5h（或另一周窗口）的剩余百分比及对应重置倒计时；只返回一种时只显示一种，字段未知不显示为0。官方字段定义见 [App Server](https://learn.chatgpt.com/docs/app-server)。
 - 圆环为 `clamp(100-usedPercent,0,100)`；是 Codex 指定周期的限额剩余比例，不是整个 ChatGPT 的剩余 token。下条为距重置秒数／窗口长度，表示时间。
 - 重置券数量来自 `rateLimitResetCredits.availableCount`，数量以官方汇总为准，详情缺失不影响计数。真实数量为0时右侧显示“没有！！”，读取未知或失败显示“—”；未知不是零，不推算或兑换。超过8张时最多画8枚并显示其余数量。不显示券的到期时间，也不将券详情传入页面。
 - 金黄色圈、棕色巧克力和短矩形彩色糖针均为可编辑 SVG：`assets/tonut-donut.svg`。甜甜圈在原头像 hover 弹层底部靠左展示数量；券行上方留白16px，保持离开立即隐藏。
@@ -88,7 +89,7 @@ npm run build:preview
 npm run test:browser
 ```
 
-浏览器测试使用外部 Chrome，必要时设 `CHROME_PATH`；不自动下载浏览器。`npm run demo` 仅监听 `127.0.0.1:43189`，示例89%和2张券均为模拟数据。编辑 SVG 后运行 `npm run build:icon`。
+浏览器测试使用外部 Chrome，必要时设 `CHROME_PATH`；不自动下载浏览器。`npm run demo` 仅监听 `127.0.0.1:43189`，默认周89%、可切换的5h62%和2张券均为模拟数据；按钮可分别检查仅周、仅5h和双窗口。编辑 SVG 后运行 `npm run build:icon`。
 
 `node scripts/package.mjs` 用 Python3 打包明确列出的源码，生成 ZIP、内部清单和 `dist/SHA256SUMS`。不带 Node、宿主、私有证据或已登录数据。需要在自己的已备份 Mac 上核验实际回滚时，明确运行 `node scripts/verify-macos-update.mjs --live`；它短暂重载 Tonut 自有任务，不退出宿主。
 
