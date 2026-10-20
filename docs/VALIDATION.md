@@ -1,6 +1,8 @@
-# Validation —0.4.0
+# Validation —0.4.2
 
-The release uses the official readonly Codex rate-limit endpoint. Local verification records, actual quota snapshots, account data, screenshots, native process receipts and personal paths are excluded from source and release packages.
+The release uses the official readonly Codex rate-limit endpoint.
+
+0.4.2 adds duration-based retention of weekly and5h windows. Fixtures cover only-weekly, only5h, both slot orders, configured duration300/10080, missing usage/reset/duration, expired windows and duplicate-duration ambiguity. Browser cases check conditional additional rows, own reset information, no overflow, original animations/geometry, zero/unknown credits and16px credit spacing. The local account returned only a10080-minute window during the live readonly check;5h screenshots and browser cases use explicitly labeled mock snapshots. This does not claim a live5h account was available. Local verification records, actual quota snapshots, account data, screenshots, native process receipts and personal paths are excluded from source and release packages.
 
 Automated fixtures cover config preservation, complete staging, no-stop-before-validation, fresh install failure, repeated update, faults before/after rename/start/health, child-process interruption, retained recovery receipts, diagnostic data minimization/rotation, strict host/listener/page identity, quota read failures, reconnect/re-injection, unknown/reset-credit semantics and cooperative Windows worker restart/Store-path change.
 
