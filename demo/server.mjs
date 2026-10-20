@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 const files = new Map([
+  ['/donut.mjs', ['../src/donut.mjs','text/javascript']],
   ['/', ['index.html', 'text/html']], ['/demo.mjs', ['demo.mjs', 'text/javascript']],
   ['/renderer.mjs', ['../src/renderer.mjs', 'text/javascript']], ['/quota.mjs', ['../src/quota.mjs', 'text/javascript']]
 ]);

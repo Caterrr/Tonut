@@ -1,10 +1,11 @@
 import { installAvatarRing } from '/renderer.mjs';
+import { DONUT_SVG } from '/donut.mjs';
 import { quotaFromResponse } from '/quota.mjs';
-installAvatarRing('#account');
+installAvatarRing('#account',DONUT_SVG);
 const reading = document.querySelector('#reading'), slider = document.querySelector('#remaining');
 function set(remaining = 89, state = 'ready') {
   const now = Date.now();
-  const data = { rateLimitsByLimitId: { codex: { limitId: 'codex', primary: {
+  const data = { rateLimitResetCredits:{availableCount:2}, rateLimitsByLimitId: { codex: { limitId: 'codex', primary: {
     usedPercent: 100 - remaining, windowDurationMins: 10080, resetsAt: Math.floor(now / 1000) + 86400
   } } } };
   const quota = quotaFromResponse(state === 'missing' ? null : data, 10080, now);
