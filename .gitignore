@@ -9,3 +9,8 @@ stop.request
 **/state.json
 **/settings.json
 .DS_Store
+
+macos/startup/bridge
+**/diagnostics/
+*.transaction.json
+*.previous/

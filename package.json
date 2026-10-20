@@ -1,6 +1,6 @@
 {
   "name": "tonut",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -12,6 +12,11 @@
     "demo": "node demo/server.mjs",
     "build:preview": "node demo/build-preview.mjs",
     "test:browser": "node test/browser.mjs",
-    "agent": "node src/agent.mjs"
+    "agent": "node src/agent.mjs",
+    "build:icon": "node scripts/sync-icon.mjs",
+    "test:windows": "powershell.exe -NoProfile -NonInteractive -File test/windows-platform.ps1"
+  },
+  "devDependencies": {
+    "playwright-core": "1.57.0"
   }
 }

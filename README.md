@@ -1,42 +1,36 @@
 # Tonut 🍩
 
-在 Codex 桌面端原头像周围显示细额度圆环，悬停或聚焦显示剩余百分比和距重置时间。圆环与额度条跟随宿主强调色，时间条为灰色；进入条动画 480ms、面板160ms，移开立即隐藏。尊重系统减少动态效果设置。
+**Token + Donut** — 在 Codex 桌面端原头像周围显示细额度圆环。悬停显示剩余额度、距重置时间，以及真实可用重置券的小甜甜圈和到期时间。
 
-**Tonut = Token + Donut。** 独立的 Codex 头像额度圆环项目。源码与安装说明：[Caterrr/Tonut](https://github.com/Caterrr/Tonut)。
+**0.4.0 发布范围：Mac 源码安装版；Windows 测试版。** [下载源码安装包](https://github.com/Caterrr/Tonut/releases/latest)。包内包含两平台安装/卸载入口，无 npm 运行依赖。Windows 的 CI 解析、编译、内核锁和模拟恢复测试不等于安装了 Codex 的 Windows 真机验证。
 
-## 工作方式与边界
+## 安装条件
 
-这是社区页面注入工具，不是官方插件、MCP 插件或独立悬浮窗。参考 [jaykinhoo9/codex-usage-badge](https://github.com/jaykinhoo9/codex-usage-badge) 的部署方式：登录后台观察新启动的官方 Codex 应用，在安全条件满足时请求正常退出，并带 `--remote-debugging-address=127.0.0.1 --remote-debugging-port=39222` 重开；另一个后台连接主页面，注入本项目 SVG，断线/重载后恢复。
+- 官方 Codex 桌面端；Mac 安装名可能为 `Codex.app` 或 `ChatGPT.app`，bundle ID 为 `com.openai.codex`，OpenAI 签名团队为 `2DC432GLL2`。
+- Node.js24+。Mac 还需要 Xcode Command Line Tools，安装器会从审阅过的源码编译自己的通用辅助程序。安装器不自动下载系统软件。
+- Windows10/11、Windows PowerShell5.1 和 Task Scheduler；官方桌面及 CLI 必须有有效 OpenAI 发布者签名，现有脚本策略允许执行本地脚本。源码打包开发命令另需 Python3。
 
-端口只监听本机，但它没有身份认证：其他本机程序可能通过该端口操控应用页面。安装意味着接受登录后台和本机调试端口。宿主应用包、签名、Dock、开机安全设置不做修改。无需辅助功能或录屏权限；若系统要求新的权限，先停止并检查原因。
+## macOS
 
-取数来自安装应用自带官方 CLI 的 App Server `account/rateLimits/read`，通过 CLI 自身管理的现有登录状态读取。代码不打开、复制或上传 `auth.json`、Keychain、Cookie、聊天数据库或凭据。只将百分比、窗口长度与重置时间传入页面，不保存账号响应。没有网络遥测或自动下载更新。
-
-默认选 `rateLimitsByLimitId.codex` 中10080分钟周窗口；旧格式仅在没有多桶映射时使用 `rateLimits`。`100-usedPercent` 是该 Codex 周期剩余额度，**不是整个 ChatGPT 的剩余 token**。可在安装目录 `config.json` 将 `duration` 改为300以显示5小时窗口，再重新加载本项目后台。不会根据套餐名猜窗口；缺失/过期/150秒未刷新时显示不可用。第二条为 `距重置秒数 / (窗口分钟数 × 60)`，表示时间比例。
-
-## macOS 安装
-
-依赖：可运行 Node.js24 的 macOS、官方 Codex 桌面端、Node.js24+、Xcode Command Line Tools（用于编译自己的启动辅助程序）。支持 Intel 和 Apple Silicon；没有 npm 运行依赖，无需 `npm install`。官方安装名可能为 `Codex.app` 或 `ChatGPT.app`，以 bundle ID `com.openai.codex` 核对。
-
-下载或克隆 [Caterrr/Tonut](https://github.com/Caterrr/Tonut)，进入项目根目录后运行：
+下载 `Tonut-0.4.0-source.zip` 并解压，终端进入其中 `Tonut` 文件夹。按实际应用路径运行：
 
 ```sh
 node scripts/manage-macos.mjs install /Applications/ChatGPT.app
 node scripts/manage-macos.mjs status
 ```
 
-也可在终端运行 `zsh Install.command`，它会寻找上述两个常见应用路径。GitHub 网页上传不保留可执行位，使用这里的 `node` 或 `zsh` 命令即可，无需调整系统安全设置。安装器只编译并 ad-hoc 签名自己的通用二进制，不签名宿主，不提供 Gatekeeper 绕过操作。
+也可运行 `zsh Install.command`，它会检查已有配置及常见应用路径。不需要 `npm install`。如果系统拦截执行、缺少工具或要求新的权限，停止并检查；不要关闭安全保护或修改宿主签名。
 
-安装文件在 `~/Library/Application Support/Tonut`，登录任务为：
+文件安装到 `~/Library/Application Support/Tonut`，登录任务仅为 `com.tonut.agent` 和 `com.tonut.startup`。安装/更新不退出当前宿主窗口。首次启用时，正常退出 Codex，再从原图标打开并等待数秒。
 
-- `~/Library/LaunchAgents/com.tonut.agent.plist`
-- `~/Library/LaunchAgents/com.tonut.startup.plist`
+更新：解压审阅过的新版本，重新执行同一 `install` 命令。安装器先暂存全部文件、编译与检查，再正常停止 Tonut 并切换；失败自动恢复旧文件、配置和服务。现有 `duration`（10080周／300五小时）和自定义头像选择器会保留。最后一个健康版本位于 `Tonut.previous`。安装期间不要移动源码文件夹。
 
-安装不会退出当前已运行的工作窗口。**请正常退出 Codex 后再从原图标打开**，并等待数秒；首次普通启动可能出现一次正常重开以启用端口。此后额度连接自动恢复。脚本不会强退或接管长时间运行的窗口。
+若更新被系统中断，使用新版本源码运行：
 
-自动重开必须同时满足：仅一个目标实例、参数可确认且为无参数普通启动、启动完成且在前台、启动不超过8秒、启动后没有键盘/点击/滚轮操作、端口未占用、距上次尝试超过120秒。退出被拒、出现其他实例、期间用户操作或状态不明均停止；已拒绝实例不反复尝试。辅助程序只读取输入活动计数/时间，不记录键值、文本、鼠标位置或截图。
-
-更新：在独立 Tonut 仓库获取审阅过的新源码后重新运行同一安装命令；先编译检查成功再替换后台文件。不会自动下载或执行远程更新。
+```sh
+node scripts/manage-macos.mjs recover
+node scripts/manage-macos.mjs status
+```
 
 卸载：
 
@@ -44,48 +38,58 @@ node scripts/manage-macos.mjs status
 node scripts/manage-macos.mjs uninstall
 ```
 
-若已移除源码，可运行：
+源码已移除时：
 
 ```sh
 node "$HOME/Library/Application Support/Tonut/scripts/manage-macos.mjs" uninstall
 ```
 
-卸载移除本项目两个后台和自己的文件、清理自己的页面元素。随后正常退出并普通重开 Codex，关闭仍由宿主持有的调试端口。其他插件、任务和仓库文件不受影响。
+卸载只正常停止 Tonut、移除其两个登录任务和安装/上一版本目录，不强退宿主。调试端口属于宿主；方便时正常退出并普通重开宿主即可关闭。
 
-## Windows（实验代码，尚无实机验证）
+## Windows 测试版
 
-提供与 macOS 相同的保守启动控制器、Windows 原生活动/进程观察和登录后台。需要 Windows10/11、Node.js24+、Windows PowerShell5.1、Task Scheduler 和带有效 OpenAI 发布者签名的官方桌面/CLI。需要系统现有脚本策略允许执行本地脚本；本项目不绕过或更改策略。如果受组织策略阻止，请停止并由管理员审阅，不要禁用安全设置。
+解压后在 PowerShell 进入 `Tonut`。首次安装需提供实际官方桌面及 CLI 路径（请替换占位符）：
 
-安装入口为 `windows/manage.ps1 -Action Install -AppExe ... -CodexCli ...`；两个参数必须是实际安装的官方可执行文件绝对路径，不读取凭据。由于尚未在 Windows 上执行，**此版本暂不提供复制即用的 Windows 安装承诺**。`Install.cmd` 是该入口的封装，需先完成实机审阅。源文件的语法/安全静态检查和跨平台控制器单元测试通过，不等于 Windows 安装或 UI 实测。
+```powershell
+.\windows\manage.ps1 -Action Install -AppExe 'C:\实际安装目录\Codex.exe' -CodexCli 'C:\实际官方CLI目录\codex.exe'
+.\windows\manage.ps1 -Action Status
+```
 
-安装目录 `%LOCALAPPDATA%\Tonut`，登录计划任务 `Tonut`，以当前交互用户、普通权限运行。WScript 隐藏启动 supervisor，避免登录出现控制台；自有进程使用锁避免重复。停止/卸载通过 `stop.request` 协作完成，不强退宿主或辅助进程。后台未正常停止时卸载会中止，保留文件供检查。
+`Install.cmd` 是该入口的封装，接受相同的 `-AppExe`／`-CodexCli` 参数。未知或未签名的可执行文件会拒绝安装；不会绕过 PowerShell 策略。尚未验证你的 Windows 安装包是否满足这些路径和签名条件，不能承诺复制占位命令即可安装。
 
-更新重新运行安装入口。卸载入口 `windows/manage.ps1 -Action Uninstall` 或 `Uninstall.cmd`；随后正常重开宿主以关闭端口。Store 更新导致可执行文件路径变化时需审阅并重新安装，当前不会猜测或自动接管新的包路径。Windows DOM/主题变量也需实机确认；选择器不匹配时不显示。
+更新时运行 `windows/manage.ps1 -Action Install`，沿用已有配置；异常中断后运行 `-Action Recover`。卸载用 `-Action Uninstall` 或 `Uninstall.cmd`。
 
-## 模拟、验证和源码打包
+安装目录 `%LOCALAPPDATA%\Tonut`，计划任务 `Tonut`，当前交互用户普通权限。任务同步监督 watchdog，watchdog 以用户会话内核互斥避免重复；supervisor 监督两个 worker。父进程退出时通过管道/IPC 正常停止子进程。卸载按本项目实际进程核验，不把残留 PID 锁文件当成活进程。Store 更新只解析已记录的精确包名称、family和publisher，重新核验官方签名与包内相对路径；无法确认时停止接管并报告，不猜包。
+
+## 数据与界面
+
+- 官方内置 CLI App Server `account/rateLimits/read`；只允许初始化及这一只读方法。优先取 `rateLimitsByLimitId.codex` 的指定窗口，旧格式仅在没有多桶映射时使用 `rateLimits`。
+- 圆环为 `clamp(100-usedPercent,0,100)`；是 Codex 指定周期的限额剩余比例，不是整个 ChatGPT 的剩余 token。下条为距重置秒数／窗口长度，表示时间。
+- 重置券数量来自 `rateLimitResetCredits.availableCount`，详细到期时间来自可用的 `credits[].expiresAt`；数量以官方汇总为准，详情可能缺失或被服务截断。未知不是零，不推算或兑换。超过8张时最多画8枚并显示其余数量。时间按设备时区显示，不凭截图补年份。
+- 金黄色圈、棕色巧克力和短矩形彩色糖针均为可编辑 SVG：`assets/tonut-donut.svg`。到期时间随甜甜圈一起在原头像 hover 弹层底部展示，保持离开立即隐藏。
+- 保留原头像位置、细圆环、480ms条／160ms面板进入、移开立即隐藏、主题跟随和减少动态效果。缺失、错误、重置过期或150秒未刷新时显示不可用。
+
+## 机制、风险与诊断
+
+这是社区页面注入工具。后台仅连接 `127.0.0.1:39222`，核验宿主签名、进程、监听所有者以及唯一 `app://-/index.html` 主页面。自动重开只限新启动8秒内、前台、无后续键盘/点击/滚轮输入、单实例普通启动；先写冷却记录，再请求正常退出。退出拒绝、用户操作、另一个实例或身份不明均停止，120秒内不重复尝试。
+
+**CDP 没有本机客户端身份认证。** 同机程序可能利用端口读取或控制宿主页面；进程核验减少误连，并不能消除这个风险。安装意味着接受已说明的登录后台及本机调试方式。宿主包、签名、Dock、安全设置和其他登录项不修改；没有辅助功能或录屏要求。
+
+代码不打开/复制凭据文件、Cookie或聊天数据库，不保存原始账号响应。进程核验只用于确认宿主/Tonut本身。`diagnostics/` 只写固定状态码、时间和恢复状态，每组件日志约16KiB轮换、最多保留两个旧文件；不写聊天、账户响应、券ID、原始命令行或异常文本。健康回执另含自有 PID 和安装随机标识。状态文件和事务回执留在本地，别把整个安装目录公开上传。
+
+`status` 可见：`ready`、`waiting_host`、`host_hidden`、`identity_mismatch`、`target_ambiguous`、`cdp_timeout`、`quota_unavailable` 等。遇到身份不匹配或39222冲突，不要结束不明进程、放宽监听或跳过校验；核对官方应用及安装路径。宿主界面改版或多主窗口时会停止猜测头像；Node路径改变后重新安装。Windows和自动启动恢复仍有 [验证边界](docs/VALIDATION.md)。
+
+## 开发和验证
 
 ```sh
+npm ci --ignore-scripts
 npm test
 npm run build:preview
-npm run demo
+npm run test:browser
 ```
 
-模拟服务器仅监听 `127.0.0.1:43189`，或打开生成的 `preview.html`。模拟值89%，与真实账号无关。浏览器验证需要外部 `playwright-core` 和 Chrome；设 `PLAYWRIGHT_MODULE` 为模块位置、`CHROME_PATH` 为浏览器位置后运行 `npm run test:browser`。测试不会下载浏览器。
+浏览器测试使用外部 Chrome，必要时设 `CHROME_PATH`；不自动下载浏览器。`npm run demo` 仅监听 `127.0.0.1:43189`，示例89%和2张券均为模拟数据。编辑 SVG 后运行 `npm run build:icon`。
 
-```sh
-node scripts/package.mjs
-```
+`node scripts/package.mjs` 用 Python3 打包明确列出的源码，生成 ZIP、内部清单和 `dist/SHA256SUMS`。不带 Node、宿主、私有证据或已登录数据。需要在自己的已备份 Mac 上核验实际回滚时，明确运行 `node scripts/verify-macos-update.mjs --live`；它短暂重载 Tonut 自有任务，不退出宿主。
 
-在 macOS 生成 `dist/Tonut-0.3.0-source.zip` 和 SHA256SUMS，仅复制明确列出的公开源码。源码包需要上面列出的 Node 和编译工具，不包含 Node、宿主应用或账号数据。没有上传实机截图、账号快照或调试日志。详细验证范围见 [VALIDATION](docs/VALIDATION.md)。
-
-## 故障排查
-
-- **重新打开后没圆环**：先运行 status。已运行的窗口不会被安装器接管；正常退出重开并在刚启动时暂停操作。活动/后台启动会安全跳过，可能需要下次普通启动。不要反复强退。
-- **端口39222冲突**：查看 `lsof -nP -iTCP:39222 -sTCP:LISTEN`。不要结束不明进程或把端口暴露到网络。启动观察记录在安装目录 `macos/startup/state.json`，只含本地事件/PID，不要公开上传。
-- **有圆环但灰色**：在官方使用情况中确认账号/指定周期可用；本项目不代替官方登录，不把缺失值显示为100%。额度每60秒刷新。
-- **应用更新后消失**：当前只接受唯一 `app://-/index.html` 主页面和导航栏中精确的中/英文资料菜单头像结构；改版时先复核 DOM。多窗口不猜目标。
-- **Node移动/删除**：登录任务使用安装时的绝对 Node 路径；重新安装以更新。
-- **编译或签名失败**：保留源码，检查 Xcode 工具；不要关闭 Gatekeeper、SIP 或重签名宿主。
-- **脚本策略/新权限提示**：停止并检查；这里没有要求启用辅助功能、录屏或放宽脚本策略。
-
-MIT；上游启动辅助代码的原版权和完整许可保留于 [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)。
+[发布验收](docs/RELEASE_CHECKLIST.md) · [更新记录](CHANGELOG.md) · [MIT及上游署名](THIRD_PARTY_NOTICES.md)。
