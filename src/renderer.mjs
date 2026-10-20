@@ -28,21 +28,23 @@ export function installAvatarRing(selector,donutSVG='') {
     const container = document.createElement('div');
     const header = document.createElement('div');
     header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px';
-    const caption = document.createElement('span'); caption.textContent = label;
+    const caption = document.createElement('span'); caption.textContent = label;caption.dataset.quota=`${name}-label`;
     caption.style.cssText = 'color:var(--color-text-secondary,inherit);opacity:.8';
     const number = document.createElement('span'); number.dataset.quota = `${name}-value`;
     number.style.cssText = 'font-weight:550;letter-spacing:.01em';
     const meter = document.createElement('div'); meter.dataset.quota = `${name}-meter`;
-    meter.setAttribute('role', name === 'remaining' ? 'meter' : 'progressbar');
+    meter.setAttribute('role', name === 'reset' ? 'progressbar' : 'meter');
     meter.setAttribute('aria-valuemin', '0'); meter.setAttribute('aria-valuemax', '100');
     meter.style.cssText = 'height:4px;border-radius:9px;overflow:hidden;background:color-mix(in srgb,currentColor 10%,transparent)';
     const fill = document.createElement('div'); fill.dataset.quota = `${name}-fill`;
     fill.style.cssText = 'height:100%;width:0%;border-radius:inherit';
     header.append(caption, number); meter.append(fill); container.append(header, meter); tooltip.append(container);
-    return { container, number, meter, fill };
+    return { container, caption, number, meter, fill };
   }
   const remaining = row('剩余', 'remaining');
   const reset = row('距重置', 'reset'); reset.container.style.marginTop = '12px';
+  const additional=row('5h','additional');additional.container.dataset.quota='additional-row';additional.container.hidden=true;additional.container.style.marginTop='16px';
+  additional.number.style.fontSize='10px';additional.number.style.whiteSpace='nowrap';additional.number.parentElement.style.gap='8px';
   const creditsFooter=document.createElement('div');
   creditsFooter.dataset.quota='reset-credits';creditsFooter.style.cssText='margin-top:16px;font-size:10px;line-height:1.4;color:var(--color-text-secondary,inherit)';
   creditsFooter.hidden=true;tooltip.append(creditsFooter);let creditKey=null;
@@ -69,7 +71,7 @@ export function installAvatarRing(selector,donutSVG='') {
 
   }
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  const rows = [remaining, reset];
+  const rows = [remaining, reset, additional];
   let motion = [], revision = 0, phase = 'closed';
   for (const row of rows) { row.fill.style.transformOrigin = 'left center'; row.fill.style.transform = 'scaleX(0)'; }
   tooltip.style.opacity = '0'; tooltip.style.transform = 'translateY(3px)';
@@ -93,13 +95,14 @@ export function installAvatarRing(selector,donutSVG='') {
   function animateTo(open) {
     cancelMotion(true);
     if (reducedMotion.matches) { settle(open); return; }
-    const scales = rows.map(row => new DOMMatrixReadOnly(getComputedStyle(row.fill).transform).a);
+    const visibleRows=rows.filter(row=>!row.container.hidden);
+    const scales = visibleRows.map(row => new DOMMatrixReadOnly(getComputedStyle(row.fill).transform).a);
     const distance = Math.min(1, Math.max(...scales.map(scale => Math.abs((open ? 1 : 0) - scale))));
     const duration = 480 * distance; // Reversals cover only the distance still to travel.
     if (duration < 1) { settle(open); return; }
     phase = open ? 'opening' : 'closing'; tooltip.dataset.motion = phase;
     const generation = revision;
-    motion = rows.map((row, i) => row.fill.animate([
+    motion = visibleRows.map((row, i) => row.fill.animate([
       { transform: `scaleX(${scales[i]})` }, { transform: `scaleX(${open ? 1 : 0})` }
     ], { duration, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' }));
     motion.push(tooltip.animate([
@@ -162,10 +165,31 @@ export function installAvatarRing(selector,donutSVG='') {
       tooltip.style.top = `${Math.max(8, Math.min(top, innerHeight - tooltip.offsetHeight - 8))}px`;
     }
   }
+  function windowState(data,stale){
+    const expired=Number.isFinite(data.resetsAt)&&data.resetsAt*1000<=Date.now();
+    const percent=!stale&&!expired&&Number.isFinite(data.percent)?Math.max(0,Math.min(100,data.percent)):null;
+    const seconds=Number.isFinite(data.resetsAt)?Math.max(0,Math.ceil(data.resetsAt-Date.now()/1000)):null;
+    const timeKnown=!stale&&!expired&&seconds!==null&&Number.isFinite(data.windowDurationMins)&&data.windowDurationMins>0;
+    const timePercent=timeKnown?Math.max(0,Math.min(100,seconds/(data.windowDurationMins*60)*100)):null;
+    const days=Math.floor((seconds??0)/86400),hours=Math.floor(((seconds??0)%86400)/3600),minutes=Math.floor(((seconds??0)%3600)/60);
+    const countdown=timeKnown?(days?`${days}天 ${hours}小时`:hours?`${hours}小时 ${minutes}分`:`${minutes}分 ${(seconds??0)%60}秒`):(stale||expired?'等待刷新':'暂不可用');
+    return {percent,timePercent,countdown,compactReset:timeKnown?countdown.replaceAll(' ','')+'后重置':stale||expired?'等待刷新':'重置未知'};
+  }
   function render() {
     const stale = !Number.isFinite(value.updatedAt) || Date.now() - value.updatedAt > 150000;
-    const expired = Number.isFinite(value.resetsAt) && value.resetsAt * 1000 <= Date.now();
-    const percent = !stale && !expired && Number.isFinite(value.percent) ? Math.max(0, Math.min(100, value.percent)) : null;
+    const {percent,timePercent,countdown}=windowState(value,stale);
+    const other=Array.isArray(value.windows)?value.windows.find(w=>[300,10080].includes(w?.windowDurationMins)&&w.windowDurationMins!==value.windowDurationMins):null;
+    const wasHidden=additional.container.hidden;additional.container.hidden=!other;
+    if(other){
+      const state=windowState(other,stale),name=other.windowDurationMins===300?'5h':'周';
+      additional.caption.textContent=name;
+      additional.number.textContent=`${state.percent===null?'—':Math.round(state.percent)+'%'} · ${state.compactReset}`;
+      additional.fill.style.width=`${state.percent??0}%`;additional.fill.style.background=accent;
+      additional.meter.setAttribute('aria-label',other.label);additional.meter.setAttribute('aria-valuetext',`剩余 ${state.percent===null?'未知':Math.round(state.percent)+'%'}；${state.compactReset}`);
+      state.percent===null?additional.meter.removeAttribute('aria-valuenow'):additional.meter.setAttribute('aria-valuenow',String(state.percent));
+      if(wasHidden)additional.fill.style.transform=`scaleX(${phase==='open'||phase==='opening'?1:0})`;
+    }
+    remaining.caption.textContent=value.windowDurationMins===300?'5h 剩余':other?'周剩余':'剩余';
     track.setAttribute('stroke', percent === null ? '#9ba19a55' : `color-mix(in srgb, ${accent} 24%, transparent)`);
     arc.setAttribute('stroke', percent === null ? '#9ba19a' : accent);
     arc.setAttribute('stroke-dasharray', `${percent ?? 0} 100`);
@@ -182,19 +206,13 @@ export function installAvatarRing(selector,donutSVG='') {
     remaining.meter.setAttribute('aria-label', value.label);
     remaining.meter.setAttribute('aria-valuetext', percent === null ? '额度暂不可用' : `剩余 ${Math.round(percent)}%`);
     percent === null ? remaining.meter.removeAttribute('aria-valuenow') : remaining.meter.setAttribute('aria-valuenow', String(percent));
-    const seconds = Number.isFinite(value.resetsAt) ? Math.max(0, Math.ceil(value.resetsAt - Date.now() / 1000)) : null;
-    const duration = value.windowDurationMins;
-    const timeKnown = !stale && !expired && seconds !== null && Number.isFinite(duration) && duration > 0;
-    const timePercent = timeKnown ? Math.max(0, Math.min(100, seconds / (duration * 60) * 100)) : null;
-    const days = Math.floor((seconds ?? 0) / 86400), hours = Math.floor(((seconds ?? 0) % 86400) / 3600), minutes = Math.floor(((seconds ?? 0) % 3600) / 60);
-    const countdown = timeKnown ? (days ? `${days}天 ${hours}小时` : hours ? `${hours}小时 ${minutes}分` : `${minutes}分 ${(seconds ?? 0) % 60}秒`) : (stale || expired ? '等待刷新' : '暂不可用');
     reset.number.textContent = countdown;
     reset.fill.style.width = `${timePercent ?? 0}%`;
     reset.fill.style.background = 'color-mix(in srgb,currentColor 35%,transparent)';
     reset.meter.setAttribute('aria-label', '距额度重置的剩余时间，按当前额度窗口长度比例');
     reset.meter.setAttribute('aria-valuetext', countdown);
     timePercent === null ? reset.meter.removeAttribute('aria-valuenow') : reset.meter.setAttribute('aria-valuenow', String(timePercent));
-    tooltip.setAttribute('aria-label', `${value.label}；剩余 ${remaining.number.textContent}；距重置 ${countdown}。下条表示剩余时间占额度窗口长度的比例，不是额度。`);
+    tooltip.setAttribute('aria-label', `${value.label}；剩余 ${remaining.number.textContent}；距重置 ${countdown}。下条表示剩余时间占额度窗口长度的比例，不是额度。${other?'；'+other.label+' '+additional.number.textContent:''}`);
     ring.dataset.percent = percent === null ? '' : String(percent);
     ring.dataset.state = percent === null ? 'unavailable' : 'ready';
     renderCredits(stale);
@@ -202,7 +220,7 @@ export function installAvatarRing(selector,donutSVG='') {
   }
   const timer = setInterval(render, 250);
   window[KEY] = {
-    update(next) { value = { percent: next.percent, label: next.label, updatedAt: next.updatedAt, resetsAt: next.resetsAt, windowDurationMins: next.windowDurationMins, resetCredits: next.resetCredits }; render(); },
+    update(next) { value = { percent: next.percent, label: next.label, updatedAt: next.updatedAt, resetsAt: next.resetsAt, windowDurationMins: next.windowDurationMins, resetCredits: next.resetCredits,windows:next.windows }; render(); },
     status() { return { placed: ring.style.display !== 'none', percent: ring.dataset.percent, state: ring.dataset.state, updatedAt: value.updatedAt, label: value.label }; },
     destroy() { clearInterval(timer); cancelMotion(); reducedMotion.removeEventListener('change', motionChanged); document.removeEventListener('keydown', escape); unbind(); ring.remove(); tooltip.remove(); delete window[KEY]; }
   };
