@@ -44,7 +44,7 @@ export function installAvatarRing(selector,donutSVG='') {
   const remaining = row('剩余', 'remaining');
   const reset = row('距重置', 'reset'); reset.container.style.marginTop = '12px';
   const creditsFooter=document.createElement('div');
-  creditsFooter.dataset.quota='reset-credits';creditsFooter.style.cssText='margin-top:10px;font-size:10px;line-height:1.4;color:var(--color-text-secondary,inherit)';
+  creditsFooter.dataset.quota='reset-credits';creditsFooter.style.cssText='margin-top:13px;font-size:10px;line-height:1.4;color:var(--color-text-secondary,inherit)';
   creditsFooter.hidden=true;tooltip.append(creditsFooter);let creditKey=null;
   function renderCredits(stale) {
     const data=stale?null:value.resetCredits;
@@ -52,8 +52,8 @@ export function installAvatarRing(selector,donutSVG='') {
     if(!donutSVG){creditsFooter.hidden=true;return;}creditsFooter.hidden=false;
     if(!data||!Number.isSafeInteger(data.availableCount)||data.availableCount<0){creditsFooter.textContent='重置券暂不可用';return;}
     if(data.availableCount===0){creditsFooter.textContent='暂无重置券';return;}
-    const icons=document.createElement('div');icons.style.cssText='display:flex;align-items:center;gap:4px';
-    const label=document.createElement('span');label.textContent='重置券';label.style.marginRight='3px';icons.append(label);
+    const icons=document.createElement('div');icons.style.cssText='display:flex;align-items:center;gap:3px';
+    const label=document.createElement('span');label.textContent='重置券';label.style.cssText='margin-right:4px;transform:translateY(.5px)';icons.append(label);
     const shown=Math.min(data.availableCount,8);
     for(let i=0;i<shown;i++){
       const icon=document.createElement('span');icon.style.cssText='display:inline-flex;width:18px;height:18px;flex:none';
