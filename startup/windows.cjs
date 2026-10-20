@@ -64,7 +64,10 @@ async function main() {
   const config=JSON.parse(fs.readFileSync(path.join(root,'config.json'),'utf8'));
   const stopFile=process.env.TONUT_STOP_FILE||path.join(root,'stop.request');
   let state=readReceipt(receipt),stopped=false,timer;
+  const {Diagnostics,heartbeat}=await import('../lib/diagnostics.mjs');
+  const diagnostic=new Diagnostics(root,'startup');
   const bridge=new NativeBridge(config.AppExe,stopFile);
+  const healthTimer=setInterval(()=>{if(!stopped&&!bridge.closed)heartbeat(root,'startup',config.installId);},5000);
   const adapter={
     snapshot:()=>bridge.call('snapshot'),portInUse,
     quit:(app,stamp)=>bridge.call('quit',{pid:app.pid,key:app.key,stamp}),
@@ -74,12 +77,12 @@ async function main() {
       const {message,reason,errorCode,processCount,rebootReason,shown,ageMs,inputIdleMs,frontmostPid,...previous}=state;
       state={...previous,...details,event,nativePid:bridge.child.pid,updatedAt:Date.now()};
       writeReceipt(receipt,state);
-      console.log(new Date().toISOString(),event);
+      diagnostic.set(event==='error'?'worker_fault':'ready');heartbeat(root,'startup',config.installId);
     }
   };
   const controller=new StartupController(adapter,{lastAttemptAt:state.lastAttemptAt||0});
   function shutdown(code=0){
-    if(stopped)return;stopped=true;controller.stop();clearTimeout(timer);clearInterval(stopTimer);bridge.close();
+    if(stopped)return;stopped=true;controller.stop();clearTimeout(timer);clearInterval(stopTimer);clearInterval(healthTimer);bridge.close();
     // Only terminate our own helper if its bounded native cancellation does not finish.
     const deadline=setTimeout(()=>{bridge.child.kill();process.exit(code);},12000);deadline.unref();
     bridge.child.once('exit',()=>process.exit(code));
@@ -92,7 +95,7 @@ async function main() {
     if(bridge.closed)return shutdown(1);
     if(!stopped)timer=setTimeout(tick,controller.pendingLaunch?200:1000);
   }
-  process.once('SIGTERM',()=>shutdown());process.once('SIGINT',()=>shutdown());
+  process.once('SIGTERM',()=>shutdown());process.once('SIGINT',()=>shutdown());process.once('disconnect',()=>shutdown());process.on('message',m=>{if(m?.type==='stop')shutdown();});
   await tick();
 }
 module.exports={NativeBridge,portInUse,readReceipt,writeReceipt};
